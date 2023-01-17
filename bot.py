@@ -2,7 +2,7 @@
 import discord
 from discord.ext import commands
 import json
-from random import choice
+import random
 
 
 intents = discord.Intents.default()
@@ -23,6 +23,11 @@ async def hello(ctx):
 
 @client.command()
 async def quote(ctx):
-    await ctx.send(choice(quotes))
+    choice = random.choice(quotes)
+    embed = discord.Embed(color=None,
+                  title=f""" "{choice['text']}" """,
+                  type='rich',
+                  description=choice['from'])
+    await ctx.send(embed=embed)
 
 client.run('MTA2NDYzNDI5MTA3OTg4MDc1NA.Ga9c92.VP3Y1bY8PUZkKFv4RCAgfRRfeCU1byWAy9GStc')
