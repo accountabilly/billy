@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 import json
 import random
-
+import aiosqlite
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -14,7 +14,7 @@ client = commands.Bot(command_prefix='$', intents=intents)
 async def on_ready():
     print(f'We have logged in as {client.user}')
     global quotes
-    quotes = json.load(open('quotes.json', encoding='utf-8'))
+    quotes = json.load(open('data/quotes.json', encoding='utf-8'))
 
 
 @client.command()
@@ -29,5 +29,21 @@ async def quote(ctx):
                   type='rich',
                   description=choice['from'])
     await ctx.send(embed=embed)
+
+@client.command()
+async def add_habit(ctx, habit):
+    user_id = ctx.author.id
+
+    async with aiosqlite.connect("data/billy.db") as db:
+        await db.execute(f"INSERT INTO user_data (user_id, habits) VALUES ({user_id}, {habit});")
+        await db.commit()
+
+@client.command()
+async def list_habits(ctx):
+    user_id = ctx.author.id
+    async with aiosqlite.connect("billy.db") as db:
+        cursor = await db.execute(f"SELECT habits FROM user_data WHERE user_id={user_id};")
+        result = await cursor.fetchall()
+        await ctx.send(result)
 
 client.run('MTA2NDYzNDI5MTA3OTg4MDc1NA.Ga9c92.VP3Y1bY8PUZkKFv4RCAgfRRfeCU1byWAy9GStc')
