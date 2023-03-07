@@ -4,6 +4,7 @@ from discord.ext import commands
 import json
 import random
 import aiosqlite
+import ast
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -15,7 +16,6 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     global quotes
     quotes = json.load(open('data/quotes.json', encoding='utf-8'))
-
 
 @client.command()
 async def hello(ctx):
@@ -31,17 +31,29 @@ async def quote(ctx):
     await ctx.send(embed=embed)
 
 @client.command()
-async def add_habit(ctx, habit):
+async def add_habit(ctx, *, habit):
     user_id = ctx.author.id
 
     async with aiosqlite.connect("data/billy.db") as db:
-        await db.execute(f"INSERT INTO user_data (user_id, habits) VALUES ({user_id}, {habit});")
+        cursor = await db.execute(f"SELECT * FROM user_data WHERE user_id={user_id};")
+        result = await cursor.fetchall()
+        print(result)
+
+        if not len(result) == 0:
+            habits = ast.literal_eval(result[0][1])
+            habits.append(habit)
+            h = str(habits)
+            await db.execute(f"""UPDATE user_data SET habits="{h}" WHERE user_id={user_id};""")
+        else:
+            habits = [habit]
+            await db.execute(f"""INSERT INTO user_data (user_id, habits) VALUES ({user_id}, "{habits}");""")
+
         await db.commit()
 
 @client.command()
 async def list_habits(ctx):
     user_id = ctx.author.id
-    async with aiosqlite.connect("billy.db") as db:
+    async with aiosqlite.connect("/data/billy.db") as db:
         cursor = await db.execute(f"SELECT habits FROM user_data WHERE user_id={user_id};")
         result = await cursor.fetchall()
         await ctx.send(result)
