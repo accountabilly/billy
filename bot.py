@@ -14,6 +14,7 @@ intents.message_content = True
 GIT_USER = "pim-wtf"
 GIT_REPO = "billy"
 GIT_TOKEN = '???'
+ADMINS = 1086569251541893120, 445248853613084672
 
 client = commands.Bot(command_prefix='$', intents=intents)
 
@@ -22,6 +23,10 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     global quotes
     quotes = json.load(open('data/quotes.json', encoding='utf-8'))
+
+async def send_dm(user_id, message):
+    user = await client.fetch_user(user_id)
+    await user.send(message)
 
 @client.command()
 async def hello(ctx):
@@ -68,9 +73,12 @@ async def list_habits(ctx):
 async def create_issue(ctx, title, comment):
     g = Github(GIT_TOKEN)
     repo = g.get_repo(f"{GIT_USER}/{GIT_REPO}")
-    comment += f"\n\n Issue raised on discord by\n{username}\n{user_id}"
     issue = repo.create_issue(title=title, body=comment)
     await ctx.send(f"Issue {issue.number} created: {issue.html_url}")
+        # Send bot admins a message
+    message = f"\n\n Issue raised by\n{ctx.author.name}\n{ctx.author.id}\nfrom {ctx.guild}"
+    for i in ADMINS:
+        await send_dm(i, message)
 
 
 client.run('MTA2NDYzNDI5MTA3OTg4MDc1NA.Ga9c92.VP3Y1bY8PUZkKFv4RCAgfRRfeCU1byWAy9GStc')
