@@ -5,9 +5,15 @@ import json
 import random
 import aiosqlite
 import ast
+from github import Github
 
 intents = discord.Intents.default()
 intents.message_content = True
+
+    # Git info:
+GIT_USER = "pim-wtf"
+GIT_REPO = "billy"
+GIT_TOKEN = '???'
 
 client = commands.Bot(command_prefix='$', intents=intents)
 
@@ -57,5 +63,14 @@ async def list_habits(ctx):
         cursor = await db.execute(f"SELECT habits FROM user_data WHERE user_id={user_id};")
         result = await cursor.fetchall()
         await ctx.send(result)
+
+@client.command(name= 'create_issue')
+async def create_issue(ctx, title, comment):
+    g = Github(GIT_TOKEN)
+    repo = g.get_repo(f"{GIT_USER}/{GIT_REPO}")
+    comment += f"\n\n Issue raised on discord by\n{username}\n{user_id}"
+    issue = repo.create_issue(title=title, body=comment)
+    await ctx.send(f"Issue {issue.number} created: {issue.html_url}")
+
 
 client.run('MTA2NDYzNDI5MTA3OTg4MDc1NA.Ga9c92.VP3Y1bY8PUZkKFv4RCAgfRRfeCU1byWAy9GStc')
