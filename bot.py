@@ -13,8 +13,8 @@ intents.message_content = True
     # Git info:
 GIT_USER = "pim-wtf"
 GIT_REPO = "billy"
-GIT_TOKEN = '???'
-ADMINS = 1086569251541893120, 445248853613084672
+GIT_TOKEN = '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'
+ADMINS = [142368509664428032, 445248853613084672]
 
 client = commands.Bot(command_prefix='$', intents=intents)
 
@@ -70,7 +70,13 @@ async def list_habits(ctx):
         await ctx.send(result)
 
 @client.command(name= 'create_issue')
-async def create_issue(ctx, title, comment):
+async def create_issue(ctx, *, issue_input):
+
+    title, comment = issue_input.split("::")
+
+    await ctx.send(title)
+    await ctx.send(comment)
+
     g = Github(GIT_TOKEN)
     repo = g.get_repo(f"{GIT_USER}/{GIT_REPO}")
     issue = repo.create_issue(title=title, body=comment)
@@ -79,6 +85,5 @@ async def create_issue(ctx, title, comment):
     message = f"\n\n Issue raised by\n{ctx.author.name}\n{ctx.author.id}\nfrom {ctx.guild}"
     for i in ADMINS:
         await send_dm(i, message)
-
 
 client.run('MTA2NDYzNDI5MTA3OTg4MDc1NA.Ga9c92.VP3Y1bY8PUZkKFv4RCAgfRRfeCU1byWAy9GStc')
