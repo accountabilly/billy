@@ -10,6 +10,7 @@ from random import choice
 
 intents = discord.Intents.default()
 intents.message_content = True
+client = commands.Bot(command_prefix='$', intents=intents)
 
 # Git info:
 GIT_USER = "pim-wtf"
@@ -18,9 +19,7 @@ GIT_TOKEN = "github_pat_11AMR7UBQ0fzhGWuwFKZPT_RBwsdlpV5osp9xbCMtTiQXsTrLe2Lf6tB
 ADMINS = [142368509664428032, 445248853613084672]
 GREETINGS = ["Hello", "Hi", "Hey", "Howdy", "Bonjour", "Salut", "Hola", "Buenos días", "Guten Tag", "Kon'nichiwa",
              "Salam", "Shalom", "Namaste", "Sawasdee", "Ni hao", "Annyeonghaseyo", "Zdravstvuyte", "Aloha"]
-
-
-client = commands.Bot(command_prefix='$', intents=intents)
+quotes = []
 
 
 @client.event
@@ -42,11 +41,11 @@ async def hello(ctx):
 
 @client.command()
 async def quote(ctx):
-    choice = random.choice(quotes)
+    quote_choice = random.choice(quotes)
     embed = discord.Embed(color=None,
-                          title=f""" "{choice['text']}" """,
+                          title=f""" "{quote_choice['text']}" """,
                           type='rich',
-                          description=choice['from'])
+                          description=quote_choice['from'])
     await ctx.send(embed=embed)
 
 
@@ -88,11 +87,17 @@ async def create_issue(ctx, *, issue_input):
     issue_parts = issue_input.split("::")
     if len(issue_parts) != 2:
         await ctx.send(f"{choice(GREETINGS)} {ctx.author.mention},\n\n"
-                       f"Thank you for attempting to notify us of a bug or potential future enhancement.\n"
-                       f"Unfortunately your issue had an invalid input format.\n"
+                       f"Thank you for attempting to notify us of a bug or potential future enhancement.\n\n"
+                       f"Unfortunately your issue had an invalid input format."
                        f"Please enter the Issue Title and Issue Description "
                        f"separated by double colons '::' like this:\n"
                        f"```$create_issue Issue Title::Issue Description```")
+    elif len(issue_parts[0]) >= 256:
+        await ctx.send(f"{choice(GREETINGS)} {ctx.author.mention},\n\n"
+                       f"Thank you for attempting to notify us of a bug or potential future enhancement.\n\n"
+                       f"Unfortunately your issue had an invalid input format."
+                       f"Your title was too long by {len(issue_parts[0]) - 256}."
+                       f"Your title can only be a maximum of 256 characters.")
     else:
         title, comment = issue_parts
 
