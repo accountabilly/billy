@@ -64,10 +64,24 @@ async def add_habit(ctx, *, habit):
 @client.command()
 async def list_habits(ctx):
     user_id = ctx.author.id
-    async with aiosqlite.connect("/data/billy.db") as db:
+
+    async with aiosqlite.connect("data/billy.db") as db:
         cursor = await db.execute(f"SELECT habits FROM user_data WHERE user_id={user_id};")
         result = await cursor.fetchall()
-        await ctx.send(result)
+        habit_list = []
+
+        for i, habit in enumerate(ast.literal_eval(result[0][0])):
+            habit_list.append(str(i+1) + ". " + habit)
+
+        habit_list = "\n".join(habit_list)
+
+        embed = discord.Embed(color=None,
+                              title=f"""{ctx.author.display_name}'s habits""",
+                              type='rich',
+                              description=habit_list)
+
+        await ctx.send(ctx.author.mention, embed=embed)
+
 
 @client.command(name= 'create_issue')
 async def create_issue(ctx, *, issue_input):
