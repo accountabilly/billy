@@ -38,20 +38,27 @@ async def send_dm(user_id, message):
 
 
 async def fetch_data(user_id, *columns):
+
     # TODO: Comments
+
     # Connect to database
+
     async with aiosqlite.connect("data/billy.db") as db:
         cursor = await db.cursor()
+
         if columns:
-            # If columns are specified, only fetch those columns
+
+            # If columns are specified, only fetch those columns. Use column names provided in *columns
             column_names = list(columns)
             query = f"SELECT {','.join(column_names)} FROM user_data WHERE user_id={user_id};"
-        else:
 
+        else:
+            # If no columns are specified, fetch all columns and all column names.
             query = f"SELECT * FROM user_data WHERE user_id={user_id};"
             await cursor.execute(query)
             column_names = [description[0] for description in cursor.description]
 
+        # Execute the query and fetch the data
         await cursor.execute(query)
         row = await cursor.fetchone()
 
@@ -96,35 +103,36 @@ async def quote(ctx):
 async def add_habit(ctx, *, habit=None):
     # TODO: Comments
     user_id = ctx.author.id
+    intro = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
 
     data = await fetch_data(user_id, 'habits')
     if habit is None:
         # TODO: No habit specified message
-        await ctx.send("No habit specified")
+        await ctx.send(f"No habit specified")
     elif not habit.strip():
         # TODO: habit incorrect format message
-        await ctx.send("Habit has an incorrect format")
+        await ctx.send(f"Habit has an incorrect format")
     elif len(data['habits']) >= HABIT_DEFAULT_MAX:
         # TODO: Maximum habits reached message
         print(data['habits'])
         print(len(data['habits']))
-        await ctx.send("Maximum habits reached")
+        await ctx.send(f"Maximum habits reached")
     elif len(habit.strip()) > HABIT_CHAR_MAX:
         # TODO: Maximum character length message
-        await ctx.send("Maximum character length exceeded")
+        await ctx.send(f"Maximum character length exceeded")
     else:
         async with aiosqlite.connect("data/billy.db") as db:
             if data is None:
                 habits = [habit.lower()]
                 await db.execute(f"""INSERT INTO user_data (user_id, habits) VALUES ({user_id}, "{habits}");""")
                 # TODO: Create profile and add habit message
-                await ctx.send("Profile created and added your first habit")
+                await ctx.send(f"Profile created and added your first habit")
             else:
                 data['habits'].append(habit.lower())
                 habit_string = str(data['habits'])
                 await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
                 # TODO: add habit message
-                await ctx.send("Habit added")
+                await ctx.send(f"Habit added")
 
             await db.commit()
 
@@ -136,50 +144,64 @@ async def remove_habit(ctx, *, habit_loc=None):
     data = await fetch_data(user_id)
     if habit_loc is None:
         # TODO: habit to delete unspecified message
-        await ctx.send('habit to delete unspecified')
+        # This will check if anything was specified in habit_loc if no will trigger a no habit specified message
+        await ctx.send(f'habit to delete unspecified')
     elif data is None:
         # TODO: no profile exists message
-        await ctx.send('No profile exits')
+        # This checks if there is a profile, if not it will trigger a no profile exists message
+        await ctx.send(f'No profile exits')
     elif len(data['habits']) == 0 or data['habits'] is None:
         # TODO: no habits message
-        await ctx.send('you dont have any habits')
-    else:
-        if not habit_loc.isdigit() and not isinstance(habit_loc, str):
-            # TODO: incorrect format message
-            await ctx.send("incorrect format")
+        # This checks the string in 'habits' and if is empty or returns None then will trigger a no habits message
+        await ctx.send(f'you dont have any habits')
+    elif not habit_loc.isdigit() and not isinstance(habit_loc, str):
+        # TODO: incorrect format message
+        # This should check if habit_loc is not a string or a potential integer and if not return
+        # incorrect format message
+        await ctx.send(f"incorrect format")
+    elif habit_loc.lstrip('-').isdigit() and not 0 < int(habit_loc) <= len(data['habits']):
+        # TODO: outside scope messages
+        await ctx.send(f'I am hitting this')
+        # if habit is at least 1 and maximum of length of 'habits' then:
+        if (int(habit_loc) <= 0 or int(habit_loc) > len(data['habits'])) and len(data['habits']) >= 2:
+            # checks if habit_loc is 0 or less, or if habit_loc is more than length of 'habits'.
+            # and also checks if length of 'habits' is more than 1 and then triggers a message
+            await ctx.send(f"please choose a number between 1 and {len(data['habits'])}")
         else:
+            # or if you only have 1 in length of 'habits' then:
+            await ctx.send(f"you only have one habit")
+    elif isinstance(habit_loc, str) and habit_loc.lower() not in data['habits'] and not habit_loc.isdigit():
+        # then if habit_loc is a string and not an integer:
+        # TODO: cant find your habit message
+        # then if habit_loc is not in 'habits' send a message saying so:
+        await ctx.send(f'habit cannot be found')
+    else:
+        async with aiosqlite.connect("data/billy.db") as db:
             if habit_loc.isdigit():
-                habit_loc = int(habit_loc)
-                if not 0 < habit_loc <= len(data['habits']):
-                    # TODO: outside scope messages
-                    if habit_loc <= 0 or habit_loc > len(data['habits']) > 1:
-                        await ctx.send(f"please choose a number between 1 and {len(data['habits'])}")
-                    else:
-                        await ctx.send("you only have one habit")
-                else:
-                    habit_loc -= 1
+                # If habit is an integer then it should convert the potential integer into an integer
+                habit_index = int(habit_loc) - 1
             elif isinstance(habit_loc, str):
-                if habit_loc.lower() not in data['habits']:
-                    # TODO: cant find your habit message
-                    await ctx.send('habit cannot be found')
-                else:
-                    habit_loc = data['habits'].index(habit_loc.lower())
-            async with aiosqlite.connect("data/billy.db") as db:
-                await ctx.send(habit_loc)
-                del data['habits'][habit_loc]
-                habit_string = str(data['habits'])
-                await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
-                # TODO: habit removed code and message
-                await ctx.send('habit removed')
-                await db.commit()
+                habit_index = data['habits'].index(habit_loc.lower())
+                # if habit_loc integer follows all the above then it needs to be formatted into an index by - 1
+                # assiign to habit_index variable and del the data from habits using that index
+            else:
+                print(f"unknown error")
+            del data['habits'][habit_index]
+            # connect to database, convert habits list to a string and uses SQL query to update database
+            habit_string = str(data['habits'])
+            await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
+            # TODO: habit removed code and message
+            await ctx.send(f'habit removed')
+            await db.commit()
 
 
 @client.command()
 async def list_habits(ctx):
     # TODO: Comments
+    # Fetch data
     user_id = ctx.author.id
-
     data = await fetch_data(user_id, 'habits')
+
     if data is None:
         # TODO: no profile exists message
         await ctx.send("No profile exists")
