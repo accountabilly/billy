@@ -40,7 +40,6 @@ async def send_dm(user_id, message):
 
 async def fetch_data(user_id, *columns):
     """
-
     :param user_id:
     :param columns:
     :return:
@@ -105,6 +104,12 @@ async def quote(ctx):
 
 @client.command()
 async def add_habit(ctx, *, habit=None):
+    """
+
+    :param ctx:
+    :param habit:
+    :return:
+    """
     # Comment
     user_id = ctx.author.id
     data = await fetch_data(user_id, 'habits')
@@ -147,7 +152,6 @@ async def add_habit(ctx, *, habit=None):
 @client.command()
 async def remove_habit(ctx, *, habit_loc=None):
     """
-
     :param ctx:
     :param habit_loc:
     :return:
@@ -214,7 +218,7 @@ async def remove_habit(ctx, *, habit_loc=None):
 
 @client.command()
 async def list_habits(ctx):
-    # TODO: Comments
+
     # Fetch data
     user_id = ctx.author.id
     data = await fetch_data(user_id, 'habits')
@@ -246,50 +250,87 @@ async def list_habits(ctx):
 @client.command(name='create_issue')
 async def create_issue(ctx, *, issue_input=None):
 
-    # Formatting the issue and error handling
+    """
+
+    :param ctx:
+    :param issue_input:
+    :return:
+    """
+
+    max_title_char_len = 256  # GitHub has a max title char length of 256
+
+    # Error handling messages and introduction
     intro = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n" \
             f"Thank you for attempting to notify us of a bug or potential future enhancement.\n\n" \
             f"Unfortunately your issue had an invalid input format."
-    if issue_input is not None:
-        issue_parts = issue_input.split("::")
-        if len(issue_parts) != 2:
-            await ctx.send(f"{intro} Please enter the Issue Title and Issue Description "
-                           f"separated by double colons '::' like this:\n"
-                           f"```$create_issue Issue Title::Issue Description```")
-        else:
-            title, comment = issue_parts
-            if not title.strip():
-                await ctx.send(f"{intro} Please provide a valid Issue Title.")
-            elif len(title) >= 256:
-                excess_len = len(title) - 256
-                await ctx.send(f"{intro} Your title was too long by {excess_len} characters. "
-                               f"Please provide a title with a maximum of 256 characters.")
-            elif not comment.strip():
-                await ctx.send(f"{intro} Please provide a valid Issue Description.")
-            else:
-                # Create issue on GitHub
 
-                g = Github(GIT_TOKEN)
-                repo = g.get_repo(f"{GIT_USER}/{GIT_REPO}")
-                issue = repo.create_issue(title=title, body=comment)
+    no_issue_input_error = f"{intro} No Issue title or Issue Description was entered."
 
-                # Send issue confirmation message to the channel
+    formatting_error = f"{intro} Please enter the Issue Title and Issue Description " \
+                       f"separated by double colons '::' like this:\n" \
+                       f"```$create_issue Issue Title::Issue Description```"
 
-                await ctx.send(f"Issue #{issue.number} created ✅\n"
-                               f"```Issue title:\n{title}\n"
-                               f"Issue body:\n{comment}\n```"
-                               f"You can keep up to date with the progress of this issue here:\n{issue.html_url}")
+    # Error handling
+    if issue_input is None:  # If user didn't add any input
+        await ctx.send(no_issue_input_error)
 
-                # Send bot admins a message
+    elif issue_input.split("::") != 2:  # If the user didn't format the title and comment correctly
+        await ctx.send(formatting_error)
 
-                message = f"Issue raised ✅\n" \
-                          f"Name: {ctx.author.name}\n" \
-                          f"User ID: {ctx.author}\n" \
-                          f"From: {ctx.guild}"
-                for i in ADMINS:
-                    await send_dm(i, message)
     else:
-        await ctx.send(f"{intro} No Issue title or Issue Description was entered.")
+        # Split into title and comment excess length amount
+        title, comment = issue_input.split("::")
+        excess_len = len(title) - max_title_char_len
+
+        # Error handling messages
+        no_newlines_error = f"{intro} Please do not include newlines in your issue title."
+
+        invalid_title_error = f"{intro} Please provide a valid Issue Title."
+
+        max_char_title_error = f"{intro} Your title was too long by {excess_len} characters. " \
+                               f"Please provide a title with a maximum of 256 characters."
+
+        invalid_comment_error = f"{intro} Please provide a valid Issue Description."
+
+        # Error handling
+        if title.count("\n") > 0:  # If title contains one or more newlines
+            await ctx.send(no_newlines_error)
+
+        elif not title.strip():  # If title is empty or just whitespace/tabs
+            await ctx.send(invalid_title_error)
+
+        elif len(title) >= max_title_char_len:  # If title is more than GitHubs title character maximum
+            await ctx.send(max_char_title_error)
+
+        elif not comment.strip():  # If comment is empty or just whitespace/tabs
+            await ctx.send(invalid_comment_error)
+
+        else:  # Errors handled
+
+            # Create issue on GitHub
+            g = Github(GIT_TOKEN)
+            repo = g.get_repo(f"{GIT_USER}/{GIT_REPO}")
+            issue = repo.create_issue(title=title, body=comment)
+
+            # Issue created confirmation messages
+            user_confirmation_message = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n" \
+                                        f"Issue #{issue.number} created ✅\n" \
+                                        f"```Issue title:\n{title}\n" \
+                                        f"Issue body:\n{comment}\n```" \
+                                        f"You can keep up to date with the progress of this issue here:\n" \
+                                        f"{issue.html_url}"
+
+            admin_confirmation_message = f"Issue raised ✅\n" \
+                                         f"Name: {ctx.author.name}\n" \
+                                         f"User ID: {ctx.author}\n" \
+                                         f"From: {ctx.guild}"
+
+            # Send issue confirmation message to the channel
+            await ctx.send(user_confirmation_message)
+
+            # Send issue confirmation message to Billy Bot admins
+            for i in ADMINS:
+                await send_dm(i, admin_confirmation_message)
 
 
 client.run(DISCORD_TOKEN)
