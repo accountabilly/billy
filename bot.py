@@ -95,10 +95,8 @@ async def hello(ctx):
 @client.command()
 async def quote(ctx):
     quote_choice = random.choice(quotes)
-    embed = discord.Embed(color=None,
-                          title=f""" "{quote_choice['text']}" """,
-                          type='rich',
-                          description=quote_choice['from'])
+    embed = discord.Embed(color=None, title=f""" "{quote_choice['text']}" """,
+                          type='rich', description=quote_choice['from'])
     await ctx.send(embed=embed)
 
 
@@ -113,22 +111,39 @@ async def add_habit(ctx, *, habit=None):
     # Comment
     user_id = ctx.author.id
     data = await fetch_data(user_id, 'habits')
+
+    # Error handling messages and message introduction
     intro = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
 
+    no_habit_error = f""
+
+    invalid_format_error = f""
+
+    max_habit_error = f""
+
+    max_habit_char_error = f""
+
+    no_newlines_error = f""
+
+    user_created_message = f""
+
+    habit_added_message = f""
+
+    # Error handling
     if habit is None:  # Comment
-        await ctx.send(f"No habit specified")
+        await ctx.send(no_habit_error)
 
     elif not habit.strip():  # Comment
-        await ctx.send(f"Habit has an incorrect format")
+        await ctx.send(invalid_format_error)
 
     elif len(data['habits']) >= HABIT_DEFAULT_MAX:
-        print(data['habits'])
-        print(len(data['habits']))
-        await ctx.send(f"Maximum habits reached")
+        await ctx.send(max_habit_error)
 
     elif len(habit.strip()) > HABIT_CHAR_MAX:
-        # TODO: Maximum character length message
-        await ctx.send(f"Maximum character length exceeded")
+        await ctx.send(max_habit_char_error)
+
+    elif habit.count("\n") > 0:  # If habit contains any newlines
+        await ctx.send(no_newlines_error)
 
     else:  # Comment
         async with aiosqlite.connect(DATABASE) as db:
@@ -136,14 +151,13 @@ async def add_habit(ctx, *, habit=None):
             if data is None:  # Comment
                 habits = [habit.lower()]
                 await db.execute(f"""INSERT INTO user_data (user_id, habits) VALUES ({user_id}, "{habits}");""")
-                await ctx.send(f"Profile created and added your first habit")
+                await ctx.send(user_created_message)
 
             else:  # Comment
                 data['habits'].append(habit.lower())
                 habit_string = str(data['habits'])
                 await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
-                # TODO: add habit message
-                await ctx.send(f"Habit added")
+                await ctx.send(habit_added_message)
 
             # Comment
             await db.commit()
@@ -157,62 +171,72 @@ async def remove_habit(ctx, *, habit_loc=None):
     :return:
     """
 
-    # Comment
+    # Fetch data
     user_id = ctx.author.id
     data = await fetch_data(user_id)
 
-    # Comment
-    if habit_loc is None:
-        await ctx.send(f'habit to delete unspecified')
+    # Error handling messages and message introduction
+    intro = f""
 
-    # Comment
-    elif data is None:
-        await ctx.send(f'No profile exits')
+    no_habit_loc_error = f"{intro}"
 
-    # Comment
-    elif len(data['habits']) == 0 or data['habits'] is None:
-        await ctx.send(f'you dont have any habits')
+    no_profile_error = f"{intro}"
 
-    # Comment
-    elif not habit_loc.isdigit() and not isinstance(habit_loc, str):
-        await ctx.send(f"incorrect format")
+    no_habits_error = f"{intro}"
 
-    # Comment
+    incorrect_format_error = f"{intro}"
+
+    multi_oor_error = f"{intro}"
+
+    single_oor_error = f"{intro}"
+
+    not_found_error = f"{intro}"
+
+    habit_removed_message = f"{intro}"
+
+    #  Error handling
+    if habit_loc is None:  # If user didn't add any input
+        await ctx.send(no_habit_loc_error)
+
+    elif data is None:  # If user doesn't have a profile
+        await ctx.send(no_profile_error)
+
+    elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
+        await ctx.send(no_habits_error)
+
+    elif not habit_loc.isdigit() or not isinstance(habit_loc, str):  # If habit_loc is not an integer or a string
+        await ctx.send(incorrect_format_error)
+
+    # If user input is an integer and is not within range of habits
     elif habit_loc.lstrip('-').isdigit() and not 0 < int(habit_loc) <= len(data['habits']):
-        await ctx.send(f'I am hitting this')
 
-        # Comment
-        if (int(habit_loc) <= 0 or int(habit_loc) > len(data['habits'])) and len(data['habits']) >= 2:
-            await ctx.send(f"please choose a number between 1 and {len(data['habits'])}")
+        if len(data['habits']) >= 2:  # If user has more than 1 habit
+            await ctx.send(multi_oor_error + f"please choose a number between 1 and {len(data['habits'])}")
 
-        else:  # Comment
-            await ctx.send(f"you only have one habit")
+        else:  # If user has one habit
+            await ctx.send(single_oor_error)
 
-    # Comment
-    elif isinstance(habit_loc, str) and habit_loc.lower() not in data['habits'] and not habit_loc.isdigit():
-        await ctx.send(f'habit cannot be found')
+    # If user inout is a string
+    elif habit_loc.lower() not in data['habits']:  # If user input is not in habits
+        await ctx.send(not_found_error)
 
-    else:  # Comment
+    else:  # Errors handled
 
-        # Comment
+        # Connect to Billy database
         async with aiosqlite.connect(DATABASE) as db:
 
-            # Comment
-            if habit_loc.isdigit():
+            # Index formatting
+            if habit_loc.isdigit():  # if user input is integer
                 habit_index = int(habit_loc) - 1
 
-            # Comment
-            elif isinstance(habit_loc, str):
+            elif isinstance(habit_loc, str):  # if user input is string
                 habit_index = data['habits'].index(habit_loc.lower())
 
-            else:  # Comment
-                print(f"unknown error")
-
-            # Comment
+            # Remove habit, convert habit to string, update SQL query and execute query
             del data['habits'][habit_index]
             habit_string = str(data['habits'])
             await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
-            await ctx.send(f'habit removed')
+            await ctx.send(habit_removed_message)
             await db.commit()
 
 
@@ -223,15 +247,20 @@ async def list_habits(ctx):
     user_id = ctx.author.id
     data = await fetch_data(user_id, 'habits')
 
-    if data is None:  # Comment
-        await ctx.send("No profile exists")
+    no_profile_error = f""
 
-    # Comment
-    elif len(data['habits']) == 0 or data['habits'] is None:
-        # TODO: you have no habits message
-        await ctx.send("You have no habits")
+    no_habits_error = f""
 
-    else:  # Comment
+    # Error handling
+    if data is None:  # If user doesn't have a profile
+        await ctx.send(no_profile_error)
+
+    elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
+        await ctx.send(no_habits_error)
+
+    else:  # Errors handled
+
+        # Create an empty list, format each item and join into one formatted string
         habit_list = []
 
         for i, habit in enumerate(data['habits']):
@@ -239,10 +268,8 @@ async def list_habits(ctx):
 
         habit_list = "\n".join(habit_list)
 
-        embed = discord.Embed(color=None,
-                              title=f"""{ctx.author.display_name}'s habits""",
-                              type='rich',
-                              description=habit_list)
+        embed = discord.Embed(color=None, title=f"""{ctx.author.display_name}'s habits""",
+                              type='rich', description=habit_list)
 
         await ctx.send(f"{random.choice(GREETINGS)} {ctx.author.mention}", embed=embed)
 
@@ -259,10 +286,13 @@ async def create_issue(ctx, *, issue_input=None):
 
     max_title_char_len = 256  # GitHub has a max title char length of 256
 
-    # Error handling messages and introduction
+    # Error handling messages and message introduction
     intro = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n" \
             f"Thank you for attempting to notify us of a bug or potential future enhancement.\n\n" \
-            f"Unfortunately your issue had an invalid input format."
+            f"Unfortunately your issue had an invalid input format. "
+
+    no_profile_error = f"{intro[:-54]}You don't seem to have a profile with us yet. " \
+                       f"Please add a habit and try using some features first before trying to notify us of any issues."
 
     no_issue_input_error = f"{intro} No Issue title or Issue Description was entered."
 
@@ -270,8 +300,14 @@ async def create_issue(ctx, *, issue_input=None):
                        f"separated by double colons '::' like this:\n" \
                        f"```$create_issue Issue Title::Issue Description```"
 
+    user_id = ctx.author.id
+    data = await fetch_data(user_id, 'habits')
+
     # Error handling
-    if issue_input is None:  # If user didn't add any input
+    if data is None:  # If user doesn't have a profile
+        await ctx.send(no_profile_error)
+
+    elif issue_input is None:  # If user didn't add any input
         await ctx.send(no_issue_input_error)
 
     elif issue_input.split("::") != 2:  # If the user didn't format the title and comment correctly
@@ -293,7 +329,7 @@ async def create_issue(ctx, *, issue_input=None):
         invalid_comment_error = f"{intro} Please provide a valid Issue Description."
 
         # Error handling
-        if title.count("\n") > 0:  # If title contains one or more newlines
+        if title.count("\n") > 0:  # If title contains any newlines
             await ctx.send(no_newlines_error)
 
         elif not title.strip():  # If title is empty or just whitespace/tabs
