@@ -39,11 +39,6 @@ async def send_dm(user_id, message):
 
 
 async def fetch_data(user_id, *columns):
-    """
-    :param user_id:
-    :param columns:
-    :return:
-    """
 
     # Connect to database
     async with aiosqlite.connect(DATABASE) as db:
@@ -102,32 +97,27 @@ async def quote(ctx):
 
 @client.command()
 async def add_habit(ctx, *, habit=None):
-    """
 
-    :param ctx:
-    :param habit:
-    :return:
-    """
     # Comment
     user_id = ctx.author.id
     data = await fetch_data(user_id, 'habits')
 
     # Error handling messages and message introduction
-    intro = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
+    salutation = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
 
-    no_habit_error = f""
+    no_habit_error = f"{salutation}"
 
-    invalid_format_error = f""
+    invalid_format_error = f"{salutation}"
 
-    max_habit_error = f""
+    max_habit_error = f"{salutation}"
 
-    max_habit_char_error = f""
+    max_habit_char_error = f"{salutation}"
 
-    no_newlines_error = f""
+    no_newlines_error = f"{salutation}"
 
-    user_created_message = f""
+    user_created_message = f"{salutation}"
 
-    habit_added_message = f""
+    habit_added_message = f"{salutation}"
 
     # Error handling
     if habit is None:  # Comment
@@ -165,34 +155,29 @@ async def add_habit(ctx, *, habit=None):
 
 @client.command()
 async def remove_habit(ctx, *, habit_loc=None):
-    """
-    :param ctx:
-    :param habit_loc:
-    :return:
-    """
 
     # Fetch data
     user_id = ctx.author.id
     data = await fetch_data(user_id)
 
     # Error handling messages and message introduction
-    intro = f""
+    salutation = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
 
-    no_habit_loc_error = f"{intro}"
+    no_habit_loc_error = f"{salutation}"
 
-    no_profile_error = f"{intro}"
+    no_profile_error = f"{salutation}"
 
-    no_habits_error = f"{intro}"
+    no_habits_error = f"{salutation}"
 
-    incorrect_format_error = f"{intro}"
+    incorrect_format_error = f"{salutation}"
 
-    multi_oor_error = f"{intro}"
+    multi_oor_error = f"{salutation}"
 
-    single_oor_error = f"{intro}"
+    single_oor_error = f"{salutation}"
 
-    not_found_error = f"{intro}"
+    not_found_error = f"{salutation}"
 
-    habit_removed_message = f"{intro}"
+    habit_removed_message = f"{salutation}"
 
     #  Error handling
     if habit_loc is None:  # If user didn't add any input
@@ -241,15 +226,21 @@ async def remove_habit(ctx, *, habit_loc=None):
 
 
 @client.command()
-async def list_habits(ctx):
+async def list_habits(ctx, *, input=None):
 
     # Fetch data
     user_id = ctx.author.id
     data = await fetch_data(user_id, 'habits')
 
-    no_profile_error = f""
+    salutation = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
 
-    no_habits_error = f""
+    no_profile_error = f"{salutation}You don't seem to have a profile with us yet. " \
+                       f"To get started, please add a habit using the add habit command e.g.:\n" \
+                       f"```$add_habit Wake up at 7am```"
+
+    no_habits_error = f"{salutation}"
+
+    input_error = f""
 
     # Error handling
     if data is None:  # If user doesn't have a profile
@@ -257,6 +248,9 @@ async def list_habits(ctx):
 
     elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
         await ctx.send(no_habits_error)
+
+    elif input is not None:
+        await ctx.send(input_error)
 
     else:  # Errors handled
 
@@ -277,21 +271,15 @@ async def list_habits(ctx):
 @client.command(name='create_issue')
 async def create_issue(ctx, *, issue_input=None):
 
-    """
-
-    :param ctx:
-    :param issue_input:
-    :return:
-    """
-
     max_title_char_len = 256  # GitHub has a max title char length of 256
 
     # Error handling messages and message introduction
-    intro = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n" \
-            f"Thank you for attempting to notify us of a bug or potential future enhancement.\n\n" \
+    salutation = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
+
+    intro = f"Thank you for attempting to notify us of an important bug or potential future enhancement.\n\n" \
             f"Unfortunately your issue had an invalid input format. "
 
-    no_profile_error = f"{intro[:-54]}You don't seem to have a profile with us yet. " \
+    no_profile_error = f"{salutation + intro[:-54]}You don't seem to have a profile with us yet. " \
                        f"Please add a habit and try using some features first before trying to notify us of any issues."
 
     no_issue_input_error = f"{intro} No Issue title or Issue Description was entered."
