@@ -226,7 +226,7 @@ async def remove_habit(ctx, *, habit_loc=None):
 
 
 @client.command()
-async def list_habits(ctx, *, input=None):
+async def list_habits(ctx, *, user_input=None):
 
     # Fetch data
     user_id = ctx.author.id
@@ -249,7 +249,7 @@ async def list_habits(ctx, *, input=None):
     elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
         await ctx.send(no_habits_error)
 
-    elif input is not None:
+    elif user_input is not None:
         await ctx.send(input_error)
 
     else:  # Errors handled
