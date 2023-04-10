@@ -1,42 +1,36 @@
 #!/bin/python3
-import discord
-from discord.ext import commands
+import ast
 import json
 import random
+import types
+
 import aiosqlite
-import ast
+import discord
+from discord.ext import commands
 from github import Github
+
+# Load API keys and admin data into a pythonic object.
+KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
+DATABASE = "data/billy.db"
 
 intents = discord.Intents.default()
 intents.message_content = True
 client = commands.Bot(command_prefix='$', intents=intents)
 
-# TODO: move sensitive data to .gitignore file
-DISCORD_TOKEN = 'MTA2NDYzNDI5MTA3OTg4MDc1NA.Ga9c92.VP3Y1bY8PUZkKFv4RCAgfRRfeCU1byWAy9GStc'
-DATABASE = "data/billy.db"
-GIT_USER = "pim-wtf"
-GIT_REPO = "billy"
-GIT_TOKEN = "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"
-ADMINS = [142368509664428032, 445248853613084672]
-GREETINGS = ["Hello", "Hi", "Hey", "Howdy", "Bonjour", "Salut", "Hola", "Buenos días", "Guten Tag", "Kon'nichiwa",
-             "Salam", "Shalom", "Namaste", "Sawasdee", "Ni hao", "Annyeonghaseyo", "Zdravstvuyte", "Aloha", "Ahoy",
-             "Hej", "Ciao"]
 HABIT_DEFAULT_MAX = 3
 HABIT_CHAR_MAX = 50
-quotes = []
+
+QUOTES = json.load(open('texts/quotes.json', encoding='utf-8'))
+GREETINGS = json.load(open('texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
 
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
-    global quotes
-    quotes = json.load(open('data/quotes.json', encoding='utf-8'))
-
 
 async def send_dm(user_id, message):
     user = await client.fetch_user(user_id)
     await user.send(message)
-
 
 async def fetch_data(user_id, *columns):
 
@@ -89,7 +83,7 @@ async def hello(ctx):
 
 @client.command()
 async def quote(ctx):
-    quote_choice = random.choice(quotes)
+    quote_choice = random.choice(QUOTES)
     embed = discord.Embed(color=None, title=f""" "{quote_choice['text']}" """,
                           type='rich', description=quote_choice['from'])
     await ctx.send(embed=embed)
@@ -332,8 +326,8 @@ async def create_issue(ctx, *, issue_input=None):
         else:  # Errors handled
 
             # Create issue on GitHub
-            g = Github(GIT_TOKEN)
-            repo = g.get_repo(f"{GIT_USER}/{GIT_REPO}")
+            g = Github(KEYS.GIT.TOKEN)
+            repo = g.get_repo(f"{KEYS.GIT.USER}/{KEYS.GIT.REPO}")
             issue = repo.create_issue(title=title, body=comment)
 
             # Issue created confirmation messages
@@ -357,4 +351,4 @@ async def create_issue(ctx, *, issue_input=None):
                 await send_dm(i, admin_confirmation_message)
 
 
-client.run(DISCORD_TOKEN)
+client.run(KEYS.DISCORD_SECRET)
