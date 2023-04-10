@@ -74,7 +74,6 @@ async def fetch_data(user_id, *columns):
         else:  # If no data fetched from database then return None
             return None
 
-
 @client.command()
 async def test(ctx):
     user_id = ctx.author.id
@@ -355,25 +354,32 @@ async def create_issue(ctx, *, issue_input=None):
             for i in ADMINS:
                 await send_dm(i, admin_confirmation_message)
 
-@client.command
+@client.command()
 async def check_habit(ctx, habit):
-   
+    
     try:
         habit = int(habit)
     except:
         pass
 
-    habits = await fetch_data(ctx.author.id, 'habits')
-    if not isinstance(habit, int) or habit > (len(habits+1)):
+    data = await fetch_data(ctx.author.id, 'habits', 'checklist')
+    habits, checklist = data['habits'], data['checklist']
+
+    print(habits, checklist)
+
+    if checklist is None:
+        checklist = [0 for habit in habits]
+
+    print("test")
+    
+    if not isinstance(habit, int) or habit > len(habits):
         await ctx.send("Invalid input.")
     else:
-        checklist = await fetch_data(ctx.author.id, 'checklist')
-        checklist[habit+1] = 1
-
+        checklist[habit-1] = 1
         async with aiosqlite.connect(DATABASE) as db:
-            await db.execute(f"""UPDATE user_data (checklist) VALUES ("{checklist}") WHERE user_id = {ctx.author.id};""")
+            await db.execute(f"""UPDATE user_data SET checklist="{str(checklist)}" WHERE user_id = {ctx.author.id};""")
             await db.commit()
 
-        await ctx.send(f"Habit {habit+1} checked off successfully.")
+        await ctx.send(f"Habit {habit} checked off successfully.")
 
 client.run(KEYS.DISCORD_SECRET)

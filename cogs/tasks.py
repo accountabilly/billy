@@ -1,17 +1,22 @@
 import datetime
+
+import aiosqlite
 import discord
 from discord.ext import commands, tasks
 
 RESET_TIME = datetime.time(hour=0, minute=0, tzinfo=datetime.timezone.utc)
+DATABASE = "data/billy.db"
 
 class Tasks(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.habit_reset_timer.start()
 
-    @tasks.loop(seconds=2)
+    @tasks.loop(time=RESET_TIME)
     async def habit_reset_timer(self):
-        print('reset habits')
+         async with aiosqlite.connect(DATABASE) as db:
+             await db.execute(f"""UPDATE user_data SET checklist = NULL;""")
+             await db.commit()
 
 async def setup(client):
     await client.add_cog(Tasks(client))
