@@ -1,3 +1,7 @@
+# sensitive data
+data/
+data/*
+
 # Pycharm
 .idea/
 
