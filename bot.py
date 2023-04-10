@@ -6,7 +6,7 @@ import types
 
 import aiosqlite
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from github import Github
 
 # Load API keys and admin data into a pythonic object.
@@ -15,14 +15,20 @@ DATABASE = "data/billy.db"
 
 intents = discord.Intents.default()
 intents.message_content = True
-client = commands.Bot(command_prefix='$', intents=intents)
 
+# TODO: Move defaults and settings somewhere else.
 HABIT_DEFAULT_MAX = 3
 HABIT_CHAR_MAX = 50
+PREFIX = '$'
 
 QUOTES = json.load(open('texts/quotes.json', encoding='utf-8'))
 GREETINGS = json.load(open('texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
+class Billy(commands.Bot):
+    async def setup_hook(self):
+        await self.load_extension("cogs.tasks")
+
+client = Billy(command_prefix=PREFIX, intents=intents)
 
 @client.event
 async def on_ready():
@@ -282,8 +288,7 @@ async def create_issue(ctx, *, issue_input=None):
                        f"separated by double colons '::' like this:\n" \
                        f"```$create_issue Issue Title::Issue Description```"
 
-    user_id = ctx.author.id
-    data = await fetch_data(user_id, 'habits')
+    data = await fetch_data(ctx.author.id, 'habits')
 
     # Error handling
     if data is None:  # If user doesn't have a profile
@@ -350,5 +355,25 @@ async def create_issue(ctx, *, issue_input=None):
             for i in ADMINS:
                 await send_dm(i, admin_confirmation_message)
 
+@client.command
+async def check_habit(ctx, habit):
+   
+    try:
+        habit = int(habit)
+    except:
+        pass
+
+    habits = await fetch_data(ctx.author.id, 'habits')
+    if not isinstance(habit, int) or habit > (len(habits+1)):
+        await ctx.send("Invalid input.")
+    else:
+        checklist = await fetch_data(ctx.author.id, 'checklist')
+        checklist[habit+1] = 1
+
+        async with aiosqlite.connect(DATABASE) as db:
+            await db.execute(f"""UPDATE user_data (checklist) VALUES ("{checklist}") WHERE user_id = {ctx.author.id};""")
+            await db.commit()
+
+        await ctx.send(f"Habit {habit+1} checked off successfully.")
 
 client.run(KEYS.DISCORD_SECRET)
