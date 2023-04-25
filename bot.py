@@ -9,6 +9,8 @@ import discord
 from discord.ext import commands, tasks
 from github import Github
 
+# import userfeedback
+
 # Load API keys and admin data into a pythonic object.
 KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
 DATABASE = "data/billy.db"
@@ -229,7 +231,7 @@ async def list_habits(ctx, *, user_input=None):
 
     # Fetch data
     user_id = ctx.author.id
-    data = await fetch_data(user_id, 'habits')
+    data = await fetch_data(user_id, 'habits', 'checklist')
 
     salutation = f"{random.choice(GREETINGS)} {ctx.author.mention},\n\n"
 
@@ -253,11 +255,18 @@ async def list_habits(ctx, *, user_input=None):
 
     else:  # Errors handled
 
+        checklist = data['checklist']
         # Create an empty list, format each item and join into one formatted string
         habit_list = []
 
         for i, habit in enumerate(data['habits']):
-            habit_list.append(str(i + 1) + ". " + habit.title())
+            string = str(i + 1) + ". " + habit.title()
+            if (checklist is not None) and checklist[i] == 1:
+                string += " ✅"
+            else:
+                string += " ❌"
+
+            habit_list.append(string)
 
         habit_list = "\n".join(habit_list)
 
@@ -356,7 +365,7 @@ async def create_issue(ctx, *, issue_input=None):
 
 @client.command()
 async def check_habit(ctx, habit):
-    
+
     try:
         habit = int(habit)
     except:
@@ -371,7 +380,7 @@ async def check_habit(ctx, habit):
         checklist = [0 for habit in habits]
 
     print("test")
-    
+
     if not isinstance(habit, int) or habit > len(habits):
         await ctx.send("Invalid input.")
     else:

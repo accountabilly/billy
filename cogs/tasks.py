@@ -14,9 +14,10 @@ class Tasks(commands.Cog):
 
     @tasks.loop(time=RESET_TIME)
     async def habit_reset_timer(self):
-         async with aiosqlite.connect(DATABASE) as db:
-             await db.execute(f"""UPDATE user_data SET checklist = NULL;""")
-             await db.commit()
+        async with aiosqlite.connect(DATABASE) as db:
+            await db.execute(f"""UPDATE user_data SET checklist = NULL;""")
+            await db.commit()
+        print("It's midnight, i've reset the checklists.")
 
 async def setup(client):
     await client.add_cog(Tasks(client))
