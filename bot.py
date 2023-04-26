@@ -11,6 +11,9 @@ from github import Github
 
 # import userfeedback
 
+# Set to true if running Billy Testing
+isTesting = True
+
 # Load API keys and admin data into a pythonic object.
 KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
 DATABASE = "data/billy.db"
@@ -34,6 +37,14 @@ client = Billy(command_prefix=PREFIX, intents=intents)
 
 @client.event
 async def on_ready():
+    activity = discord.Activity(type=discord.ActivityType.watching, name="your progress")
+    await client.change_presence(activity=activity)
+
+    if isTesting:
+        COMMIT_HEAD =open(".git/ORIG_HEAD", 'r').readline()[:7]
+        guild = await client.fetch_guild(841279909326618664)
+        billy_member = await guild.fetch_member(client.user.id)
+        await billy_member.edit(nick=f"Billy Testing ({COMMIT_HEAD})")
     print(f'We have logged in as {client.user}')
 
 async def send_dm(user_id, message):
