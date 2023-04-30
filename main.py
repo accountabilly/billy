@@ -14,12 +14,13 @@ from ext.database import Database
 # import userfeedback
 
 # Set to true if running Billy Testing
-isTesting = True
+isTesting = False
+PWD = "/home/pi/billy/"
 
 # Load API keys and admin data into a pythonic object.
-KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
-DATABASE = "data/billy.db"
-COMMIT_HEAD = open(".git/ORIG_HEAD", 'r').readline()[:7]
+KEYS = json.load(open(PWD+"data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
+DATABASE = PWD+"data/billy.db"
+COMMIT_HEAD = open(PWD+".git/ORIG_HEAD", 'r').readline()[:7]
 db = Database(DATABASE)
 
 intents = discord.Intents.default()
@@ -30,12 +31,12 @@ HABIT_DEFAULT_MAX = 3
 HABIT_CHAR_MAX = 50
 PREFIX = '$'
 
-QUOTES = json.load(open('texts/quotes.json', encoding='utf-8'))
-GREETINGS = json.load(open('texts/greetings.json', encoding='utf-8'))['GREETINGS']
+QUOTES = json.load(open(PWD+'texts/quotes.json', encoding='utf-8'))
+GREETINGS = json.load(open(PWD+'texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
 class Billy(commands.Bot):
     async def setup_hook(self):
-        for filename in os.listdir('.'):
+        for filename in os.listdir(PWD):
             if filename.endswith('.py') and not filename == 'main.py':
                 await self.load_extension(f'{filename[:-3]}')
                 print(f"{filename} loaded successfully.")

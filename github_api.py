@@ -9,10 +9,11 @@ from github import Github
 from ext.database import Database
 
 # Load API keys and admin data into a pythonic object.
-KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
-GREETINGS = json.load(open('texts/greetings.json', encoding='utf-8'))['GREETINGS']
+PWD = "/home/pi/billy/"
+KEYS = json.load(open(PWD+"data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
+GREETINGS = json.load(open(PWD+'texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
-db = Database("data/billy.db")
+db = Database(PWD+"data/billy.db")
 class GithubAccess(commands.Cog, name="Github"):
     def __init__(self, client):
         self.client = client
