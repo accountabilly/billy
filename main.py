@@ -19,6 +19,7 @@ isTesting = True
 # Load API keys and admin data into a pythonic object.
 KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
 DATABASE = "data/billy.db"
+COMMIT_HEAD = open(".git/ORIG_HEAD", 'r').readline()[:7]
 db = Database(DATABASE)
 
 intents = discord.Intents.default()
@@ -45,17 +46,17 @@ client = Billy(command_prefix=PREFIX, intents=intents)
 async def on_ready():
     activity = discord.Activity(type=discord.ActivityType.watching, name="your progress")
     await client.change_presence(activity=activity)
-
     if isTesting:
-        COMMIT_HEAD =open(".git/ORIG_HEAD", 'r').readline()[:7]
         guild = await client.fetch_guild(841279909326618664)
         billy_member = await guild.fetch_member(client.user.id)
         await billy_member.edit(nick=f"Billy Testing ({COMMIT_HEAD})")
     print(f'We have logged in as {client.user}')
 
+
 async def send_dm(user_id, message):
     user = await client.fetch_user(user_id)
     await user.send(message)
+
 
 @client.command()
 async def test(ctx):
@@ -65,8 +66,12 @@ async def test(ctx):
 
 
 @client.command()
-async def hello(ctx):
-    await ctx.send("hello")
+async def version(ctx):
+    if isTesting:
+        ver = COMMIT_HEAD
+    else:
+        ver = KEYS.VERSION
+    await ctx.send(f"I'm running version `{ver}`.")
 
 
 @client.command()
