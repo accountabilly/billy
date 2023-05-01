@@ -49,16 +49,16 @@ class GithubAccess(commands.Cog, name="Github"):
 
             # Error handling
             if title.count("\n") > 0:  # If title contains any newlines
-                await ctx.send(uf.CreateIssue.no_newlines_error)
+                await ctx.send(uf.CreateIssue.no_newlines_error(ctx.author))
 
             elif not title.strip():  # If title is empty or just whitespace/tabs
-                await ctx.send(uf.CreateIssue.invalid_title_error)
+                await ctx.send(uf.CreateIssue.invalid_title_error(ctx.author))
 
             elif len(title) >= max_title_char_len:  # If title is more than GitHubs title character maximum
-                await ctx.send(uf.CreateIssue.max_char_title_error)
+                await ctx.send(uf.CreateIssue.max_char_title_error(ctx.author, excess_len))
 
             elif not comment.strip():  # If comment is empty or just whitespace/tabs
-                await ctx.send(uf.CreateIssue.invalid_comment_error)
+                await ctx.send(uf.CreateIssue.invalid_comment_error(ctx.author))
 
             else:  # Errors handled
 
@@ -81,11 +81,11 @@ class GithubAccess(commands.Cog, name="Github"):
                                             f"From: {ctx.guild}"
 
                 # Send issue confirmation message to the channel
-                await ctx.send(user_confirmation_message)
+                await ctx.send(uf.CreateIssue.user_confirmation_message(ctx.author, issue, comment, title))
 
                 # Send issue confirmation message to Billy Bot admins
                 for i in KEYS.ADMINS:
-                    await self.send_dm(i, admin_confirmation_message)
+                    await self.send_dm(i, uf.CreateIssue.admin_confirmation_message(ctx))
 
 async def setup(client):
     await client.add_cog(GithubAccess(client))
