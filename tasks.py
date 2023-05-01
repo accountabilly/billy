@@ -5,7 +5,8 @@ import discord
 from discord.ext import commands, tasks
 
 RESET_TIME = datetime.time(hour=0, minute=0, tzinfo=datetime.timezone.utc)
-DATABASE = "data/billy.db"
+PWD = "/home/pi/billy/"
+DATABASE = PWD+"data/billy.db"
 
 class Tasks(commands.Cog):
     def __init__(self, client):

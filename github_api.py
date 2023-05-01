@@ -10,7 +10,7 @@ from ext.database import Database
 from ext.userfeedback import UserFeedback as uf
 
 # Load API keys and admin data into a pythonic object.
-PWD = "/home/pim/Nextcloud/Projects/billy/"
+PWD = "/home/pi/billy/"
 KEYS = json.load(open(PWD+"data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
 GREETINGS = json.load(open(PWD+'texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
