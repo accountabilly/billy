@@ -22,6 +22,10 @@ class UserFeedback:
                    f"```$add_habit {random.choice(UserFeedback.HABIT_EXAMPLES)}```"
 
         @staticmethod
+        def invalid_format_error(user):
+            return f"{UserFeedback.salutation(user)}Your habit has not been formatted correctly. Please try again."
+
+        @staticmethod
         def max_habit_error(user):
             return f"{UserFeedback.salutation(user)}You have already reached your maximum amount of habits."
 
@@ -43,10 +47,11 @@ class UserFeedback:
                 return f"\n\n{message}"
 
         @staticmethod
-        def user_created_message(user):
+        def user_created_message(user, habit):
             return f"{UserFeedback.salutation(user)}Congratulations! Your first habit has been added and your " \
                    f"Account-a-billy profile has been created. Well done for making this first step to creating " \
-                   f"a positive, long lasting habit."
+                   f"a positive, long lasting habit." \
+                + UserFeedback.AddHabit.habit_added_message(user, habit, salutation=False)
 
     class RemoveHabit:
         @staticmethod
