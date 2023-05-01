@@ -14,8 +14,9 @@ from ext.database import Database
 # import userfeedback
 
 # Set to true if running Billy Testing
-isTesting = False
-PWD = "/home/pi/billy/"
+isTesting = True
+
+PWD = "/home/pim/Nextcloud/Projects/billy/"
 
 # Load API keys and admin data into a pythonic object.
 KEYS = json.load(open(PWD+"data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
