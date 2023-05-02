@@ -10,7 +10,7 @@ from discord.ext import commands
 
 from ext.database import Database
 
-from ext.userfeedback import UserFeedback as uf
+from ext.userfeedback import UserFeedback as Uf
 
 # Set to true if running Billy Testing
 isTesting = False
@@ -34,6 +34,7 @@ PREFIX = '$'
 QUOTES = json.load(open(PWD+'texts/quotes.json', encoding='utf-8'))
 GREETINGS = json.load(open(PWD+'texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
+
 class Billy(commands.Bot):
     async def setup_hook(self):
         for filename in os.listdir(PWD):
@@ -41,7 +42,9 @@ class Billy(commands.Bot):
                 await self.load_extension(f'{filename[:-3]}')
                 print(f"{filename} loaded successfully.")
 
+
 client = Billy(command_prefix=PREFIX, intents=intents)
+
 
 @client.event
 async def on_ready():
@@ -92,19 +95,19 @@ async def add_habit(ctx, *, habit=None):
 
     # Error handling
     if habit is None:  # Comment
-        await ctx.send(uf.AddHabit.no_habit_error(ctx.author))
+        await ctx.send(Uf.AddHabit.no_habit_error(ctx.author))
 
     elif not habit.strip():  # Comment
-        await ctx.send(uf.AddHabit.invalid_format_error)
+        await ctx.send(Uf.AddHabit.invalid_format_error)
 
     elif len(data['habits']) >= HABIT_DEFAULT_MAX:
-        await ctx.send(uf.AddHabit.max_habit_error(ctx.author))
+        await ctx.send(Uf.AddHabit.max_habit_error(ctx.author))
 
     elif len(habit.strip()) > HABIT_CHAR_MAX:
-        await ctx.send(uf.AddHabit.max_habit_char_error(ctx.author))
+        await ctx.send(Uf.AddHabit.max_habit_char_error(ctx.author))
 
     elif habit.count("\n") > 0:  # If habit contains any newlines
-        await ctx.send(uf.AddHabit.no_newlines_error(ctx.author))
+        await ctx.send(Uf.AddHabit.no_newlines_error(ctx.author))
 
     else:  # Comment
         async with aiosqlite.connect(DATABASE) as db:
@@ -112,13 +115,13 @@ async def add_habit(ctx, *, habit=None):
             if data is None:  # Comment
                 habits = [habit.lower()]
                 await db.execute(f"""INSERT INTO user_data (user_id, habits) VALUES ({user_id}, "{habits}");""")
-                await ctx.send(uf.AddHabit.user_created_message(ctx.author, habit))
+                await ctx.send(Uf.AddHabit.user_created_message(ctx.author, habit))
 
             else:  # Comment
                 data['habits'].append(habit.lower())
                 habit_string = str(data['habits'])
                 await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
-                await ctx.send(uf.AddHabit.habit_added_message(ctx.author, habit))
+                await ctx.send(Uf.AddHabit.habit_added_message(ctx.author, habit))
 
             # Comment
             await db.commit()
@@ -133,29 +136,29 @@ async def remove_habit(ctx, *, habit_loc=None):
 
     #  Error handling
     if habit_loc is None:  # If user didn't add any input
-        await ctx.send(uf.RemoveHabit.no_habit_loc_error(ctx.author))
+        await ctx.send(Uf.RemoveHabit.no_habit_loc_error(ctx.author))
 
     elif data is None:  # If user doesn't have a profile
-        await ctx.send(uf.RemoveHabit.no_profile_error(ctx.author))
+        await ctx.send(Uf.RemoveHabit.no_profile_error(ctx.author))
 
     elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
-        await ctx.send(uf.RemoveHabit.no_habits_error(ctx.author))
+        await ctx.send(Uf.RemoveHabit.no_habits_error(ctx.author))
 
     elif not habit_loc.isdigit() or not isinstance(habit_loc, str):  # If habit_loc is not an integer or a string
-        await ctx.send(uf.RemoveHabit.incorrect_format_error(ctx.author))
+        await ctx.send(Uf.RemoveHabit.incorrect_format_error(ctx.author))
 
     # If user input is an integer and is not within range of habits
     elif habit_loc.lstrip('-').isdigit() and not 0 < int(habit_loc) <= len(data['habits']):
 
         if len(data['habits']) >= 2:  # If user has more than 1 habit
-            await ctx.send(uf.RemoveHabit.multi_oor_error(ctx.author, len(data['habits'])))
+            await ctx.send(Uf.RemoveHabit.multi_oor_error(ctx.author, len(data['habits'])))
 
         else:  # If user has one habit
-            await ctx.send(uf.RemoveHabit.single_oor_error(ctx.author))
+            await ctx.send(Uf.RemoveHabit.single_oor_error(ctx.author))
 
-    # If user inout is a string
-    elif not habit_loc.lstrip('-').isdigit() and habit_loc.lower() not in data['habits']:  # If user input is not in habits
-        await ctx.send(uf.RemoveHabit.not_found_error(ctx.author))
+    # If user inout is a string and is not in habits
+    elif not habit_loc.lstrip('-').isdigit() and habit_loc.lower() not in data['habits']:
+        await ctx.send(Uf.RemoveHabit.not_found_error(ctx.author))
 
     else:  # Errors handled
 
@@ -173,7 +176,7 @@ async def remove_habit(ctx, *, habit_loc=None):
             del data['habits'][habit_index]
             habit_string = str(data['habits'])
             await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
-            await ctx.send(uf.RemoveHabit.habit_removed_message(ctx.author, habit_string))
+            await ctx.send(Uf.RemoveHabit.habit_removed_message(ctx.author, habit_string))
             await db.commit()
 
 
@@ -186,13 +189,13 @@ async def list_habits(ctx, *, user_input=None):
 
     # Error handling
     if data is None:  # If user doesn't have a profile
-        await ctx.send(uf.ListHabits.no_profile_error(ctx.author))
+        await ctx.send(Uf.ListHabits.no_profile_error(ctx.author))
 
     elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
-        await ctx.send(uf.ListHabits.no_habits_error(ctx.author))
+        await ctx.send(Uf.ListHabits.no_habits_error(ctx.author))
 
     elif user_input is not None:
-        await ctx.send(uf.ListHabits.input_error(ctx.author))
+        await ctx.send(Uf.ListHabits.input_error(ctx.author))
 
     else:  # Errors handled
 
@@ -215,6 +218,7 @@ async def list_habits(ctx, *, user_input=None):
                               type='rich', description=habit_list)
 
         await ctx.send(f"{random.choice(GREETINGS)} {ctx.author.mention}", embed=embed)
+
 
 @client.command()
 async def check_habit(ctx, habit):
