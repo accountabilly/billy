@@ -64,7 +64,7 @@ class GithubAccess(commands.Cog, name="Github"):
                 # Create issue on GitHub
                 g = Github(KEYS.GIT.TOKEN)
                 repo = g.get_repo(f"{KEYS.GIT.USER}/{KEYS.GIT.REPO}")
-                issue = repo.create_issue(title=title, body=comment+bot_footer)
+                issue = repo.create_issue(title=title, body=comment+bot_footer, labels='discord')
 
                 # Send issue confirmation message to the channel
                 await ctx.send(Uf.CreateIssue.user_confirmation_message(ctx.author, issue, comment, title))
