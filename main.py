@@ -13,7 +13,7 @@ from ext.database import Database
 from ext.userfeedback import UserFeedback as Uf
 
 # Set to true if running Billy Testing
-isTesting = False
+isTesting = True
 
 PWD = "/home/pi/billy/"
 
@@ -89,21 +89,21 @@ async def quote(ctx):
 @client.command()
 async def add_habit(ctx, *, habit=None):
 
-    # Comment
+    # Fetch data
     user_id = ctx.author.id
     data = await database.fetch_data(user_id, 'habits')
 
     # Error handling
-    if habit is None:  # Comment
+    if habit is None:  # If user didn't input any habit
         await ctx.send(Uf.AddHabit.no_habit_error(ctx.author))
 
-    elif not habit.strip():  # Comment
+    elif not habit.strip():  # If user inputted white
         await ctx.send(Uf.AddHabit.invalid_format_error)
 
-    elif len(data['habits']) >= HABIT_DEFAULT_MAX:
+    elif len(data['habits']) >= HABIT_DEFAULT_MAX:  # If user has max habits when trying to add a new habit
         await ctx.send(Uf.AddHabit.max_habit_error(ctx.author))
 
-    elif len(habit.strip()) > HABIT_CHAR_MAX:
+    elif len(habit.strip()) > HABIT_CHAR_MAX:  # If user has inputted a habit that is too many characters
         await ctx.send(Uf.AddHabit.max_habit_char_error(ctx.author))
 
     elif habit.count("\n") > 0:  # If habit contains any newlines
@@ -112,18 +112,18 @@ async def add_habit(ctx, *, habit=None):
     else:  # Comment
         async with aiosqlite.connect(DATABASE) as db:
 
-            if data is None:  # Comment
+            if data is None:  # If adding habit for first time will create a profile and add a habit
                 habits = [habit.lower()]
                 await db.execute(f"""INSERT INTO user_data (user_id, habits) VALUES ({user_id}, "{habits}");""")
                 await ctx.send(Uf.AddHabit.user_created_message(ctx.author, habit))
 
-            else:  # Comment
+            else:  # If profile already created then adds habit to profile
                 data['habits'].append(habit.lower())
                 habit_string = str(data['habits'])
                 await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
                 await ctx.send(Uf.AddHabit.habit_added_message(ctx.author, habit))
 
-            # Comment
+            # Commits changes to the database
             await db.commit()
 
 
@@ -194,13 +194,13 @@ async def list_habits(ctx, *, user_input=None):
     elif len(data['habits']) == 0 or data['habits'] is None:  # If user doesn't have any habits
         await ctx.send(Uf.ListHabits.no_habits_error(ctx.author))
 
-    elif user_input is not None:
+    elif user_input is not None:  # If user didn't input in a habit to deleted
         await ctx.send(Uf.ListHabits.input_error(ctx.author))
 
     else:  # Errors handled
 
         checklist = data['checklist']
-        # Create an empty list, format each item and join into one formatted string
+        # Create an empty list, format each item and join into one formatted string and then embeds it
         habit_list = []
 
         for i, habit in enumerate(data['habits']):
@@ -217,6 +217,7 @@ async def list_habits(ctx, *, user_input=None):
         embed = discord.Embed(color=None, title=f"""{ctx.author.display_name}'s habits""",
                               type='rich', description=habit_list)
 
+        # Sends formatted and embedded message to the user on discord
         await ctx.send(f"{random.choice(GREETINGS)} {ctx.author.mention}", embed=embed)
 
 

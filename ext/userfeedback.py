@@ -36,7 +36,8 @@ class UserFeedback:
 
         @staticmethod
         def no_newlines_error(user):
-            return f"{UserFeedback.salutation(user)}Please create a habit without a newline."
+            return f"{UserFeedback.salutation(user)}Please create a habit without a newline e.g." \
+                   f"```$add_habit {random.choice(UserFeedback.HABIT_EXAMPLES)}```"
 
         @staticmethod
         def habit_added_message(user, habit, salutation=True):
@@ -61,11 +62,13 @@ class UserFeedback:
         @staticmethod
         def no_profile_error(user):
             return f"{UserFeedback.salutation(user)}You haven't got a profile with us. Please try adding a habit" \
-                   f" which will automatically create a profile with us. "
+                   f" which will automatically create a profile with us.\n" \
+                   f"```$add_habit {random.choice(UserFeedback.HABIT_EXAMPLES)}```"
 
         @staticmethod
         def no_habits_error(user):
-            return f"{UserFeedback.salutation(user)}You haven't got any habits at the moment. Please add a habit"
+            return f"{UserFeedback.salutation(user)}You haven't got any habits at the moment. Please add a habit\n" \
+                   f"```$add_habit {random.choice(UserFeedback.HABIT_EXAMPLES)}```"
 
         @staticmethod
         def incorrect_format_error(user):
@@ -120,7 +123,8 @@ class UserFeedback:
         def no_profile_error(user):
             return f"{UserFeedback.CreateIssue.intro(user)[:-54]}" \
                    f"You don't seem to have a profile with us yet. " \
-                   f"Please add a habit and try using some features first before trying to notify us of any issues."
+                   f"Please add a habit and try using some features first before trying to notify us of any issues.\n" \
+                   f"```$add_habit {random.choice(UserFeedback.HABIT_EXAMPLES)}```"
 
         @staticmethod
         def no_issue_input_error(user):
