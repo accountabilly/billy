@@ -4,8 +4,7 @@ import aiosqlite
 from discord.ext import commands, tasks
 
 RESET_TIME = datetime.time(hour=0, minute=0, tzinfo=datetime.timezone.utc)
-PWD = "/home/pi/billy/"
-DATABASE = PWD+"data/billy.db"
+DATABASE = "data/billy.db"
 
 
 class Tasks(commands.Cog):

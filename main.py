@@ -9,18 +9,16 @@ import discord
 from discord.ext import commands
 
 from ext.database import Database
-
+from ext.emoji_map import detect_emojis
 from ext.userfeedback import UserFeedback as Uf
 
 # Set to true if running Billy Testing
 isTesting = True
 
-PWD = "/home/pi/billy/"
-
 # Load API keys and admin data into a pythonic object.
-KEYS = json.load(open(PWD+"data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
-DATABASE = PWD+"data/billy.db"
-COMMIT_HEAD = open(PWD+".git/ORIG_HEAD", 'r').readline()[:7]
+KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
+DATABASE = "data/billy.db"
+COMMIT_HEAD = open(".git/ORIG_HEAD", 'r').readline()[:7]
 database = Database(DATABASE)
 
 intents = discord.Intents.default()
@@ -31,13 +29,13 @@ HABIT_DEFAULT_MAX = 3
 HABIT_CHAR_MAX = 50
 PREFIX = '$'
 
-QUOTES = json.load(open(PWD+'texts/quotes.json', encoding='utf-8'))
-GREETINGS = json.load(open(PWD+'texts/greetings.json', encoding='utf-8'))['GREETINGS']
+QUOTES = json.load(open('texts/quotes.json', encoding='utf-8'))
+GREETINGS = json.load(open('texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
 
 class Billy(commands.Bot):
     async def setup_hook(self):
-        for filename in os.listdir(PWD):
+        for filename in os.listdir():
             if filename.endswith('.py') and not filename == 'main.py':
                 await self.load_extension(f'{filename[:-3]}')
                 print(f"{filename} loaded successfully.")
@@ -78,12 +76,12 @@ async def version(ctx):
     await ctx.send(f"I'm running version `{ver}`.")
 
 
-@client.command()
-async def quote(ctx):
-    quote_choice = random.choice(QUOTES)
-    embed = discord.Embed(color=None, title=f""" "{quote_choice['text']}" """,
-                          type='rich', description=quote_choice['from'])
-    await ctx.send(embed=embed)
+    @client.command()
+    async def quote(ctx):
+        quote_choice = random.choice(QUOTES)
+        embed = discord.Embed(color=None, title=f""" "{quote_choice['text']}" """,
+                            type='rich', description=quote_choice['from'])
+        await ctx.send(embed=embed)
 
 
 @client.command()
@@ -173,12 +171,12 @@ async def remove_habit(ctx, *, habit_loc=None):
                 habit_index = data['habits'].index(habit_loc.lower())
 
             # Remove habit, convert habit to string, update SQL query and execute query
-            del data['habits'][habit_index]
+            habit_to_delete = data['habits'][habit_index]
+            del habit_to_delete
             habit_string = str(data['habits'])
             await db.execute(f"""UPDATE user_data SET habits="{habit_string}" WHERE user_id={user_id};""")
-            await ctx.send(Uf.RemoveHabit.habit_removed_message(ctx.author, habit_string))
+            await ctx.send(Uf.RemoveHabit.habit_removed_message(ctx.author, habit_to_delete))
             await db.commit()
-
 
 @client.command()
 async def list_habits(ctx, *, user_input=None):
@@ -204,7 +202,9 @@ async def list_habits(ctx, *, user_input=None):
         habit_list = []
 
         for i, habit in enumerate(data['habits']):
+            habit = detect_emojis(habit, "data/emoji_map.json")
             string = str(i + 1) + ". " + habit.title()
+            print(string)
             if (checklist is not None) and checklist[i] == 1:
                 string += " ✅"
             else:
@@ -215,7 +215,7 @@ async def list_habits(ctx, *, user_input=None):
         habit_list = "\n".join(habit_list)
 
         embed = discord.Embed(color=None, title=f"""{ctx.author.display_name}'s habits""",
-                              type='rich', description=habit_list)
+                            type='rich', description=habit_list)
 
         # Sends formatted and embedded message to the user on discord
         await ctx.send(f"{random.choice(GREETINGS)} {ctx.author.mention}", embed=embed)

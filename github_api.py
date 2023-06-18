@@ -8,11 +8,10 @@ from ext.database import Database
 from ext.userfeedback import UserFeedback as Uf
 
 # Load API keys and admin data into a pythonic object.
-PWD = "/home/pi/billy/"
-KEYS = json.load(open(PWD+"data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
-GREETINGS = json.load(open(PWD+'texts/greetings.json', encoding='utf-8'))['GREETINGS']
+KEYS = json.load(open("data/admin.json"), object_hook=lambda d: types.SimpleNamespace(**d))
+GREETINGS = json.load(open('texts/greetings.json', encoding='utf-8'))['GREETINGS']
 
-db = Database(PWD+"data/billy.db")
+db = Database("data/billy.db")
 
 
 class GithubAccess(commands.Cog, name="Github"):
